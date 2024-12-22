@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'quiz_confirmation_page.dart';
 
 class ParticiperQuizPage extends StatefulWidget {
@@ -8,6 +10,37 @@ class ParticiperQuizPage extends StatefulWidget {
 
 class _ParticiperQuizPageState extends State<ParticiperQuizPage> {
   final TextEditingController codeController = TextEditingController();
+
+  Future<void> _searchQuiz() async {
+    String enteredCode = codeController.text.trim();
+    final prefs = await SharedPreferences.getInstance();
+
+    if (prefs.containsKey(enteredCode)) {
+      String? quizJson = prefs.getString(enteredCode);
+      Map<String, dynamic> quizData = jsonDecode(quizJson!);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => QuizConfirmationPage(quizData: quizData),
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Code Incorrect"),
+          content: const Text("Aucun quiz trouvé avec ce code."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,40 +74,21 @@ class _ParticiperQuizPageState extends State<ParticiperQuizPage> {
                 ),
               ),
               const SizedBox(height: 30),
-              // Zone de saisie du code
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (int i = 0; i < 3; i++)
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                        width: 50,
-                        child: TextField(
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 24),
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.all(10),
-                          ),
-                          maxLength: 1,
-                        ),
-                      ),
-                  ],
+                child: TextField(
+                  controller: codeController,
+                  decoration: InputDecoration(
+                    hintText: "Entrez le code du quiz",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  // Navigation vers la page de confirmation
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => QuizConfirmationPage()),
-                  );
-                },
+                onPressed: _searchQuiz,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(

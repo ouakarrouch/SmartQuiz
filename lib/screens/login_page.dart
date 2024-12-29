@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'home_page.dart'; // Page d'accueil après connexion réussie
-import 'reset_password_page.dart'; // Page pour réinitialiser le mot de passe
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -9,9 +8,63 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final SupabaseClient supabase = Supabase.instance.client;
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  bool isLoading = false;
   String? _errorMessage;
+
+  Future<void> login() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final email = emailController.text;
+      final password = passwordController.text;
+
+      final response = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (response.user != null) {
+        final userId = response.user!.id;
+        setState(() {
+          _errorMessage = null; // Réinitialise les erreurs précédentes
+        });
+
+        final userResponse =
+            await supabase.from('users').select().eq('id', userId).single();
+
+        if (userResponse != null) {
+          // Sauvegarder l'utilisateur localement avec SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('user_id', userId);
+
+          // Utilisateur trouvé, passez à la page d'accueil
+          Navigator.pushReplacementNamed(
+              context, '/home'); // Remplacez MaterialPageRoute
+        } else {
+          setState(() {
+            _errorMessage = 'Aucun utilisateur trouvé avec cet ID';
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Email ou mot de passe incorrect';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,10 +114,10 @@ class _LoginPageState extends State<LoginPage> {
                       SizedBox(height: 20),
 
                       // Champs Email
-                      _buildTextField(_emailController, 'Email', false),
+                      _buildTextField(emailController, 'Email', false),
 
                       // Champs Mot de passe
-                      _buildTextField(_passwordController, 'Mot de passe', true),
+                      _buildTextField(passwordController, 'Mot de passe', true),
 
                       SizedBox(height: 10),
 
@@ -75,7 +128,8 @@ class _LoginPageState extends State<LoginPage> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => ResetPasswordPage()),
+                              MaterialPageRoute(
+                                  builder: (context) => ResetPasswordPage()),
                             );
                           },
                           child: Text(
@@ -100,25 +154,13 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           minimumSize: Size(double.infinity, 50),
                         ),
-                        onPressed: () async {
-                          SharedPreferences prefs = await SharedPreferences.getInstance();
-                          String storedEmail = prefs.getString('email') ?? '';
-                          String storedPassword = prefs.getString('password') ?? '';
-
-                          if (_emailController.text == storedEmail &&
-                              _passwordController.text == storedPassword) {
-                            Navigator.pushReplacement(context,
-                                MaterialPageRoute(builder: (context) => HomePage()));
-                          } else {
-                            setState(() {
-                              _errorMessage = 'Email ou mot de passe incorrect';
-                            });
-                          }
-                        },
+                        onPressed: login,
                         child: Text(
                           'Log In',
                           style: TextStyle(
-                              color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
 
@@ -127,7 +169,8 @@ class _LoginPageState extends State<LoginPage> {
                         SizedBox(height: 10),
                         Text(
                           _errorMessage!,
-                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              color: Colors.red, fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -156,12 +199,40 @@ class _LoginPageState extends State<LoginPage> {
           fillColor: Colors.white,
           hintText: hintText,
           hintStyle: TextStyle(color: Colors.grey),
-          suffixIcon: isPassword ? Icon(Icons.lock_outline, color: Colors.grey) : null,
+          suffixIcon:
+              isPassword ? Icon(Icons.lock_outline, color: Colors.grey) : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Exemple d'une page d'accueil simple après connexion
+class HomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Accueil')),
+      body: Center(
+        child: Text('Bienvenue dans votre espace personnel !'),
+      ),
+    );
+  }
+}
+
+// Exemple d'une page pour réinitialiser le mot de passe
+class ResetPasswordPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Réinitialiser le mot de passe')),
+      body: Center(
+        child:
+            Text('Page de réinitialisation du mot de passe (à implémenter).'),
       ),
     );
   }

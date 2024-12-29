@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -9,13 +9,83 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize Supabase
+    Supabase.initialize(
+      url: 'https://iegxqdkoksrodyagftrs.supabase.co',
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZ3hxZGtva3Nyb2R5YWdmdHJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUwNTI3MzIsImV4cCI6MjA1MDYyODczMn0.Qj5djsw0zg84pIzw9T8nwfaeA_7bOHnhzkZ-rkh8Jd0',
+    );
+  }
+
+  Future<void> _signUp() async {
+    final firstName = _firstNameController.text;
+    final lastName = _lastNameController.text;
+    final email = _emailController.text;
+    final password = _passwordController.text;
+
+    if (_formKey.currentState?.validate() ?? false) {
+      try {
+        // Créer un utilisateur avec Supabase Auth
+        final response = await Supabase.instance.client.auth.signUp(
+          email: email,
+          password: password,
+        );
+
+        if (response.user != null) {
+          // Utilisateur inscrit avec succès, maintenant ajoutez des informations supplémentaires
+          final user = response.user;
+
+          // Insérer les données de l'utilisateur dans la table 'users'
+          final insertResponse = await Supabase.instance.client
+              .from('users') // Assurez-vous que le nom de la table est correct
+              .insert({
+                'id': user!.id,
+                'email': email,
+                'first_name': firstName,
+                'last_name': lastName,
+                'phone': _phoneController.text,
+              })
+              .select()
+              .single();
+
+          // Vérifier les erreurs après l'insertion
+          // Vérifier si `insertResponse` contient une erreur dans la réponse
+          if (insertResponse['error'] != null) {
+            _showError(
+                'Error while saving user data: ${insertResponse['error']['message']}');
+          } else {
+            // Gérer l'insertion réussie et rediriger vers la page de connexion
+            Navigator.pushReplacementNamed(
+                context, '/login'); // Redirection vers la page login
+          }
+        } else {
+          _showError('Failed to sign up. Please try again.');
+        }
+      } catch (e) {
+        _showError('Error: ${e.toString()}');
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.red,
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +121,6 @@ class _SignUpPageState extends State<SignUpPage> {
                           color: Colors.black,
                         ),
                       ),
-
                       SizedBox(height: 10),
 
                       // Add the image above the fields
@@ -59,7 +128,6 @@ class _SignUpPageState extends State<SignUpPage> {
                         'assets/signup_image.png', // Add your image to assets
                         height: 150,
                       ),
-
                       SizedBox(height: 20),
 
                       // Form
@@ -67,13 +135,14 @@ class _SignUpPageState extends State<SignUpPage> {
                         key: _formKey,
                         child: Column(
                           children: [
-                            _buildTextField(_nameController, 'Name'),
+                            _buildTextField(_firstNameController, 'First Name'),
+                            _buildTextField(_lastNameController, 'Last Name'),
                             _buildTextField(_emailController, 'Email'),
-                            _buildTextField(_phoneController, 'Téléphone'),
+                            _buildTextField(_phoneController, 'Phone'),
                             _buildPasswordField(
                                 _passwordController, 'Password'),
-                            _buildPasswordField(_confirmPasswordController,
-                                'Confirm Password'),
+                            _buildPasswordField(
+                                _confirmPasswordController, 'Confirm Password'),
                           ],
                         ),
                       ),
@@ -88,19 +157,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               borderRadius: BorderRadius.circular(30)),
                           minimumSize: Size(double.infinity, 50),
                         ),
-                        onPressed: () async {
-                          if (_formKey.currentState?.validate() ?? false) {
-                            SharedPreferences prefs =
-                                await SharedPreferences.getInstance();
-                            await prefs.setString(
-                                'name', _nameController.text);
-                            await prefs.setString(
-                                'email', _emailController.text);
-                            await prefs.setString(
-                                'password', _passwordController.text);
-                            Navigator.pushReplacementNamed(context, '/home');
-                          }
-                        },
+                        onPressed: _signUp,
                         child: Text(
                           'Sign Up',
                           style: TextStyle(

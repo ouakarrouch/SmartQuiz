@@ -13,7 +13,8 @@ dependencies:
     sdk: flutter
   shared_preferences: ^2.0.15
   cupertino_icons: ^1.0.8
-  supabase_flutter: ^2.0.0
+  postgrest: ^2.4.0
+  supabase_flutter: ^2.8.2
 
 dev_dependencies:
   flutter_test:

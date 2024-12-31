@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:quiz/utils/auth_gate.dart';
+import 'package:quiz/utils/auth_service.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
-  _SignUpPageState createState() => _SignUpPageState();
+  SignUpPageState createState() => SignUpPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
+class SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -17,65 +17,40 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
+  final AuthService _authService = AuthService(); // Utilisation d'AuthService
   String? _errorMessage;
 
-  @override
-  void initState() {
-    super.initState();
-    // Initialize Supabase
-    Supabase.initialize(
-      url: 'https://iegxqdkoksrodyagftrs.supabase.co',
-      anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZ3hxZGtva3Nyb2R5YWdmdHJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUwNTI3MzIsImV4cCI6MjA1MDYyODczMn0.Qj5djsw0zg84pIzw9T8nwfaeA_7bOHnhzkZ-rkh8Jd0',
-    );
-  }
-
   Future<void> _signUp() async {
-    final firstName = _firstNameController.text;
-    final lastName = _lastNameController.text;
-    final email = _emailController.text;
-    final password = _passwordController.text;
-
     if (_formKey.currentState?.validate() ?? false) {
       try {
-        // Créer un utilisateur avec Supabase Auth
-        final response = await Supabase.instance.client.auth.signUp(
-          email: email,
-          password: password,
+        // Récupérer les données du formulaire
+        final firstName = _firstNameController.text;
+        final lastName = _lastNameController.text;
+        final email = _emailController.text;
+        final phone = _phoneController.text;
+        final password = _passwordController.text;
+        final confirmPassword = _confirmPasswordController.text;
+
+        // Appel de la méthode signUp d'AuthService
+        await _authService.signUp(
+          firstName,
+          lastName,
+          email,
+          phone,
+          password,
+          confirmPassword,
         );
 
-        if (response.user != null) {
-          // Utilisateur inscrit avec succès, maintenant ajoutez des informations supplémentaires
-          final user = response.user;
-
-          // Insérer les données de l'utilisateur dans la table 'users'
-          final insertResponse = await Supabase.instance.client
-              .from('users') // Assurez-vous que le nom de la table est correct
-              .insert({
-                'id': user!.id,
-                'email': email,
-                'first_name': firstName,
-                'last_name': lastName,
-                'phone': _phoneController.text,
-              })
-              .select()
-              .single();
-
-          // Vérifier les erreurs après l'insertion
-          // Vérifier si `insertResponse` contient une erreur dans la réponse
-          if (insertResponse['error'] != null) {
-            _showError(
-                'Error while saving user data: ${insertResponse['error']['message']}');
-          } else {
-            // Gérer l'insertion réussie et rediriger vers la page de connexion
-            Navigator.pushReplacementNamed(
-                context, '/login'); // Redirection vers la page login
-          }
-        } else {
-          _showError('Failed to sign up. Please try again.');
+        // Check if the widget is still mounted before performing navigation
+        if (mounted) {
+          // Redirection vers la page de connexion après une inscription réussie
+          Navigator.pushReplacementNamed(context, '/login');
         }
       } catch (e) {
-        _showError('Error: ${e.toString()}');
+        setState(() {
+          _errorMessage = e.toString();
+        });
+        _showError(_errorMessage ?? 'An unexpected error occurred.');
       }
     }
   }
@@ -90,7 +65,7 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF4A4FA8), // Purple background
+      backgroundColor: const Color(0xFF4A4FA8), // Purple background
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -100,20 +75,22 @@ class _SignUpPageState extends State<SignUpPage> {
               // Back Button
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: Text('Back',
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
+                child: const Text(
+                  'Back',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
 
               // Centered Content
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Sign Up Heading
-                      Text(
+                      const Text(
                         'Sign Up',
                         style: TextStyle(
                           fontSize: 30,
@@ -121,14 +98,14 @@ class _SignUpPageState extends State<SignUpPage> {
                           color: Colors.black,
                         ),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
                       // Add the image above the fields
                       Image.asset(
                         'assets/signup_image.png', // Add your image to assets
                         height: 150,
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Form
                       Form(
@@ -147,18 +124,19 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Sign Up Button
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFD9B845), // Yellow color
+                          backgroundColor:
+                              const Color(0xFFD9B845), // Yellow color
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
-                          minimumSize: Size(double.infinity, 50),
+                          minimumSize: const Size(double.infinity, 50),
                         ),
                         onPressed: _signUp,
-                        child: Text(
+                        child: const Text(
                           'Sign Up',
                           style: TextStyle(
                               color: Colors.white,
@@ -166,6 +144,19 @@ class _SignUpPageState extends State<SignUpPage> {
                               fontSize: 18),
                         ),
                       ),
+
+                      // Display error message (if any)
+                      if (_errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20.0),
+                          child: Text(
+                            _errorMessage!,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -183,12 +174,12 @@ class _SignUpPageState extends State<SignUpPage> {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
         controller: controller,
-        style: TextStyle(color: Colors.black),
+        style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           filled: true,
           fillColor: Colors.white,
           hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey),
+          hintStyle: const TextStyle(color: Colors.grey),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
@@ -212,13 +203,13 @@ class _SignUpPageState extends State<SignUpPage> {
       child: TextFormField(
         controller: controller,
         obscureText: true,
-        style: TextStyle(color: Colors.black),
+        style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           filled: true,
           fillColor: Colors.white,
           hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey),
-          suffixIcon: Icon(Icons.lock_outline, color: Colors.grey),
+          hintStyle: const TextStyle(color: Colors.grey),
+          suffixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,

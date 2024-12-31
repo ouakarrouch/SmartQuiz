@@ -1,7 +1,8 @@
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'quiz_confirmation_page.dart';
+import 'quiza_page.dart'; // Assurez-vous que ce fichier est importé
 
 class ParticiperQuizPage extends StatefulWidget {
   @override
@@ -9,98 +10,52 @@ class ParticiperQuizPage extends StatefulWidget {
 }
 
 class _ParticiperQuizPageState extends State<ParticiperQuizPage> {
-  final TextEditingController codeController = TextEditingController();
+  final _codeController = TextEditingController();
+  String _feedbackMessage = "";
 
-  Future<void> _searchQuiz() async {
-    String enteredCode = codeController.text.trim();
-    final prefs = await SharedPreferences.getInstance();
+  Future<void> _checkQuizCode() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String code = _codeController.text.trim();
+    String? quizData = prefs.getString(code);
 
-    if (prefs.containsKey(enteredCode)) {
-      String? quizJson = prefs.getString(enteredCode);
-      Map<String, dynamic> quizData = jsonDecode(quizJson!);
-
+    if (quizData != null) {
+      Map<String, dynamic> quiz = jsonDecode(quizData);
+      setState(() {
+        _feedbackMessage = "Quiz trouvé: ${quiz['question']} (Catégorie: ${quiz['category']}, Durée: ${quiz['duration']}s)";
+      });
+      // Naviguer vers la page TestPage avec le code du quiz
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => QuizConfirmationPage(quizData: quizData),
+          builder: (context) => TestPage(testCode: code, quizData: {},),
         ),
       );
     } else {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Code Incorrect"),
-          content: const Text("Aucun quiz trouvé avec ce code."),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
-            ),
-          ],
-        ),
-      );
+      setState(() {
+        _feedbackMessage = "Code incorrect";
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB2E0F7),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "Participer à un Quiz",
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "Confiance en toi, tu es prêt !",
-                style: TextStyle(
-                  fontStyle: FontStyle.italic,
-                  fontSize: 18,
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: TextField(
-                  controller: codeController,
-                  decoration: InputDecoration(
-                    hintText: "Entrez le code du quiz",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _searchQuiz,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 12, horizontal: 40),
-                ),
-                child: const Text(
-                  "Participer",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
-              ),
-            ],
-          ),
+      appBar: AppBar(title: Text("Participer au Quiz")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _codeController,
+              decoration: InputDecoration(labelText: "Entrez le code du quiz"),
+            ),
+            ElevatedButton(
+              onPressed: _checkQuizCode,
+              child: Text("Vérifier le code"),
+            ),
+            SizedBox(height: 20),
+            Text(_feedbackMessage),
+          ],
         ),
       ),
     );

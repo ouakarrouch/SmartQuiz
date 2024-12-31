@@ -1,9 +1,52 @@
 import 'package:flutter/material.dart';
 import 'create_password_page.dart';
 
-class VerificationCodePage extends StatelessWidget {
+class VerificationCodePage extends StatefulWidget {
+  const VerificationCodePage({super.key});
+
+  @override
+  State<VerificationCodePage> createState() => _VerificationCodePageState();
+}
+
+class _VerificationCodePageState extends State<VerificationCodePage> {
   final List<TextEditingController> _controllers =
       List.generate(4, (index) => TextEditingController());
+  String? _errorMessage; // Variable pour stocker le message d'erreur
+
+  // Méthode pour récupérer le code entré
+  String _getVerificationCode() {
+    return _controllers.map((controller) => controller.text).join();
+  }
+
+  // Méthode pour valider et soumettre le code
+  void _submitCode() {
+    final code = _getVerificationCode();
+
+    if (code.length < 4) {
+      setState(() {
+        _errorMessage =
+            'Veuillez entrer un code complet.'; // Mise à jour du message d'erreur
+      });
+      return;
+    }
+
+    // Logique pour valider le code avec le backend
+    // Exemple d'appel à une API :
+    // bool isValid = await AuthService().validateVerificationCode(code);
+    const bool isValid = true; // Exemple de validation réussie.
+
+    if (isValid) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CreatePasswordPage()),
+      );
+    } else {
+      setState(() {
+        _errorMessage =
+            'Code incorrect. Veuillez réessayer.'; // Mise à jour du message d'erreur
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,14 +92,15 @@ class VerificationCodePage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
 
-            // Champs de code de vérification avec moins d'espacement
+            // Champs de code de vérification
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(4, (index) {
                 return Container(
                   width: 55, // Largeur de chaque case
                   height: 60,
-                  margin: const EdgeInsets.symmetric(horizontal: 5), // Espacement réduit
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 5), // Espacement réduit
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -94,6 +138,15 @@ class VerificationCodePage extends StatelessWidget {
               }),
             ),
 
+            // Affichage du message d'erreur s'il y en a un
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 15),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red, fontSize: 14),
+              ),
+            ],
+
             const SizedBox(height: 30),
 
             // Bouton "Submit"
@@ -101,14 +154,7 @@ class VerificationCodePage extends StatelessWidget {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CreatePasswordPage(),
-                    ),
-                  );
-                },
+                onPressed: _submitCode,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF298CFF), // Bleu bouton
                   shape: RoundedRectangleBorder(
@@ -133,6 +179,7 @@ class VerificationCodePage extends StatelessWidget {
             TextButton(
               onPressed: () {
                 // Logique pour renvoyer le code
+                print("Code resent to user's email.");
               },
               child: const Text(
                 'Resend code',

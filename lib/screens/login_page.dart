@@ -1,100 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:quiz/utils/auth_service.dart'; // Import du service d'authentification
+import 'package:quiz/screens/home_page.dart'; // Assurez-vous que HomePage existe
+import 'package:quiz/screens/reset_password_page.dart'; // Page de réinitialisation
+import 'package:quiz/screens/welcome_page.dart'; // Import de la WelcomePage
 
 class LoginPage extends StatefulWidget {
   @override
-  _LoginPageState createState() => _LoginPageState();
+  LoginPageState createState() => LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  final SupabaseClient supabase = Supabase.instance.client;
+class LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
   String? _errorMessage;
+  final AuthService _authService = AuthService();
 
-  Future<void> login() async {
+  Future<void> signInWithEmail() async {
+    if (!mounted) return; // Ensure the widget is still mounted
+
     setState(() {
       isLoading = true;
+      _errorMessage = null; // Réinitialise le message d'erreur
     });
 
     try {
-      final email = emailController.text;
+      final email = emailController.text.trim();
       final password = passwordController.text;
 
-      final response = await supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      if (email.isEmpty || password.isEmpty) {
+        throw Exception("Veuillez remplir tous les champs.");
+      }
 
-      if (response.user != null) {
-        final userId = response.user!.id;
-        setState(() {
-          _errorMessage = null; // Réinitialise les erreurs précédentes
-        });
+      // Connexion via AuthService
+      final res = await _authService.signInWithEmailPassword(email, password);
 
-        final userResponse =
-            await supabase.from('users').select().eq('id', userId).single();
+      if (res.user != null) {
+        final userId = res.user!.id;
 
-        if (userResponse != null) {
-          // Sauvegarder l'utilisateur localement avec SharedPreferences
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('user_id', userId);
+        // Sauvegarde de l'utilisateur localement
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_id', userId);
 
-          // Utilisateur trouvé, passez à la page d'accueil
+        // Redirection vers la page d'accueil
+        if (mounted) {
           Navigator.pushReplacementNamed(
-              context, '/home'); // Remplacez MaterialPageRoute
-        } else {
-          setState(() {
-            _errorMessage = 'Aucun utilisateur trouvé avec cet ID';
-          });
+              context, '/home'); // Assurez-vous que '/home' est défini
         }
       } else {
-        setState(() {
-          _errorMessage = 'Email ou mot de passe incorrect';
-        });
+        throw Exception("Email ou mot de passe incorrect.");
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll("Exception: ", "");
+        });
+      }
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF4A4FA8), // Fond violet
+      backgroundColor: const Color(0xFF4A4FA8), // Fond violet
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Bouton Retour
+              // Bouton Retour qui redirige vers la WelcomePage
               GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Text(
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            WelcomePage()), // Redirection vers WelcomePage
+                  );
+                },
+                child: const Text(
                   'Back',
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
 
               // Contenu centré
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Titre "Log In"
-                      Text(
+                      const Text(
                         'Log In',
                         style: TextStyle(
                           fontSize: 30,
@@ -103,15 +110,15 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
                       // Image au-dessus des champs
                       Image.asset(
-                        'assets/login_image.png', // Assurez-vous que l'image est dans les assets
+                        'assets/login_image.png', // Assurez-vous que l'image existe
                         height: 150,
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Champs Email
                       _buildTextField(emailController, 'Email', false),
@@ -119,7 +126,7 @@ class _LoginPageState extends State<LoginPage> {
                       // Champs Mot de passe
                       _buildTextField(passwordController, 'Mot de passe', true),
 
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
                       // Texte "Mot de passe oublié ?"
                       Align(
@@ -129,10 +136,11 @@ class _LoginPageState extends State<LoginPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => ResetPasswordPage()),
+                                  builder: (context) =>
+                                      const UserResetPasswordPage()),
                             );
                           },
-                          child: Text(
+                          child: const Text(
                             'Vous avez oublié le Mot de Passe?',
                             style: TextStyle(
                               color: Colors.white,
@@ -143,34 +151,42 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
                       // Bouton Log In
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFD9B845), // Couleur jaune
+                          backgroundColor:
+                              const Color(0xFFD9B845), // Couleur jaune
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
-                          minimumSize: Size(double.infinity, 50),
+                          minimumSize: const Size(double.infinity, 50),
                         ),
-                        onPressed: login,
-                        child: Text(
-                          'Log In',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold),
-                        ),
+                        onPressed: isLoading ? null : signInWithEmail,
+                        child: isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                'Log In',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
 
                       // Message d'erreur
                       if (_errorMessage != null) ...[
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
                         Text(
                           _errorMessage!,
-                          style: TextStyle(
-                              color: Colors.red, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -193,46 +209,20 @@ class _LoginPageState extends State<LoginPage> {
       child: TextField(
         controller: controller,
         obscureText: isPassword,
-        style: TextStyle(color: Colors.black),
+        style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           filled: true,
           fillColor: Colors.white,
           hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey),
-          suffixIcon:
-              isPassword ? Icon(Icons.lock_outline, color: Colors.grey) : null,
+          hintStyle: const TextStyle(color: Colors.grey),
+          suffixIcon: isPassword
+              ? const Icon(Icons.lock_outline, color: Colors.grey)
+              : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
           ),
         ),
-      ),
-    );
-  }
-}
-
-// Exemple d'une page d'accueil simple après connexion
-class HomePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Accueil')),
-      body: Center(
-        child: Text('Bienvenue dans votre espace personnel !'),
-      ),
-    );
-  }
-}
-
-// Exemple d'une page pour réinitialiser le mot de passe
-class ResetPasswordPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Réinitialiser le mot de passe')),
-      body: Center(
-        child:
-            Text('Page de réinitialisation du mot de passe (à implémenter).'),
       ),
     );
   }

@@ -53,7 +53,25 @@ class CreatePasswordPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            // Champ pour le mot de passe
+
+            // Question 1 : Champ pour le mot de passe avec note et réponse correcte
+            const Text(
+              'Question 1: Enter your password (Note: 10)',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              'Correct answer: A valid password (min. 8 characters)',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 10),
             TextField(
               obscureText: true,
               decoration: InputDecoration(
@@ -70,7 +88,25 @@ class CreatePasswordPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // Champ pour confirmer le mot de passe
+
+            // Question 2 : Champ pour confirmer le mot de passe avec note et réponse correcte
+            const Text(
+              'Question 2: Confirm your password (Note: 10)',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              'Correct answer: Same as the password entered above',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 10),
             TextField(
               obscureText: true,
               decoration: InputDecoration(
@@ -87,6 +123,7 @@ class CreatePasswordPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 30),
+
             // Bouton de soumission stylisé
             ElevatedButton(
               onPressed: () {

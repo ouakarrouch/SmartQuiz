@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'CréerQuizPage.dart';
-import 'participer_quiz_page.dart'; // Import de la page "Participer à un Quiz"
+import 'participer_quiz_page.dart'; 
 
 class HomePage extends StatelessWidget {
   @override
@@ -10,14 +10,15 @@ class HomePage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
             // Titre principal
             Text(
               "SMARTQUIZ",
               style: TextStyle(
-                fontSize: 36,
+                fontSize: 42,
                 fontWeight: FontWeight.bold,
                 color: Colors.yellow[700],
+                letterSpacing: 2.0, // Espacement des lettres
               ),
               textAlign: TextAlign.center,
             ),
@@ -27,9 +28,10 @@ class HomePage extends StatelessWidget {
               "Testez vos limites, enrichissez\nvos connaissances !",
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
+                height: 1.5, // Espacement entre les lignes
               ),
             ),
             const SizedBox(height: 5),
@@ -42,64 +44,71 @@ class HomePage extends StatelessWidget {
                 color: Colors.black54,
               ),
             ),
-            const SizedBox(height: 20),
-            // Boutons principaux
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    // Navigation vers la page de création de quiz
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => CreerQuizPage()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[700],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+            const SizedBox(height: 30),
+            // Boutons principaux avec plus d'espace et style amélioré
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      // Navigation vers la page de création de quiz
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => CreerQuizPage()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[700],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 24,
+                      ),
+                      elevation: 8, // Ajouter une ombre pour l'effet de survol
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 20,
-                    ),
-                  ),
-                  child: const Text(
-                    "Créer Quiz",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Navigation vers la page "Participer à un Quiz"
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => ParticiperQuizPage()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[700],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 20,
+                    child: const Text(
+                      "Créer Quiz",
+                      style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
                   ),
-                  child: const Text(
-                    "Participer à un Quiz",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Navigation vers la page "Participer à un Quiz"
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ParticiperQuizPage(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[700],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 24,
+                      ),
+                      elevation: 8, // Ajouter une ombre pour l'effet de survol
+                    ),
+                    child: const Text(
+                      "Participer à un Quiz",
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 30),
-            // Liste des catégories
+            // Liste des catégories avec effet visuel sur les éléments
             Expanded(
               child: ListView(
+                padding: const EdgeInsets.all(8.0),
                 children: [
                   CategoryItem(
                     icon: Icons.history,
@@ -176,7 +185,7 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// Widget personnalisé pour les catégories
+// Widget personnalisé pour les catégories avec un effet de survol
 class CategoryItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -195,25 +204,25 @@ class CategoryItem extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
               color: Colors.black26,
-              offset: Offset(0, 2),
-              blurRadius: 4,
+              offset: Offset(0, 4),
+              blurRadius: 8,
             ),
           ],
         ),
         child: ListTile(
           leading: Icon(
             icon,
-            size: 30,
+            size: 32,
             color: Colors.white,
           ),
           title: Text(
             label,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),

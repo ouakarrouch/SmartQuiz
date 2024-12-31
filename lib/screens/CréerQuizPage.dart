@@ -15,6 +15,7 @@ class _CreerQuizPageState extends State<CreerQuizPage> {
   final _durationController = TextEditingController();
   final _possibleAnswersController = TextEditingController();
   final _correctAnswerController = TextEditingController();
+  final _noteController = TextEditingController();
   String _quizType = "public"; // Type de quiz par défaut
 
   // Générer un code unique de 4 chiffres pour le quiz
@@ -24,7 +25,7 @@ class _CreerQuizPageState extends State<CreerQuizPage> {
   }
 
   // Sauvegarder un quiz dans SharedPreferences
-  Future<void> _saveQuiz(String code, String question, String correctAnswer, String category, String possibleAnswers, String quizType, int duration) async {
+  Future<void> _saveQuiz(String code, String question, String correctAnswer, String category, String possibleAnswers, String quizType, int duration, String note) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     Map<String, dynamic> quizData = {
       'question': question,
@@ -33,6 +34,7 @@ class _CreerQuizPageState extends State<CreerQuizPage> {
       'possibleAnswers': possibleAnswers,
       'quizType': quizType,
       'duration': duration,
+      'note': note,
     };
     await prefs.setString(code, jsonEncode(quizData));
     print("Quiz sauvegardé avec le code : $code");
@@ -46,9 +48,10 @@ class _CreerQuizPageState extends State<CreerQuizPage> {
     String category = _categoryController.text.trim();
     String possibleAnswers = _possibleAnswersController.text.trim();
     int duration = int.tryParse(_durationController.text.trim()) ?? 0;
+    String note = _noteController.text.trim();
 
-    if (question.isNotEmpty && correctAnswer.isNotEmpty && category.isNotEmpty && possibleAnswers.isNotEmpty && duration > 0) {
-      _saveQuiz(code, question, correctAnswer, category, possibleAnswers, _quizType, duration);
+    if (question.isNotEmpty && correctAnswer.isNotEmpty && category.isNotEmpty && possibleAnswers.isNotEmpty && duration > 0 && note.isNotEmpty) {
+      _saveQuiz(code, question, correctAnswer, category, possibleAnswers, _quizType, duration, note);
 
       String message = _quizType == "public"
           ? "Votre quiz a été créé avec succès et est public."
@@ -78,33 +81,46 @@ class _CreerQuizPageState extends State<CreerQuizPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Créer un Quiz")),
-      body: Padding(
+      backgroundColor: const Color(0xFFB2E0F7),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          "Créer Quiz",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _questionController,
-              decoration: InputDecoration(labelText: "Entrez votre question"),
-            ),
-            TextField(
-              controller: _possibleAnswersController,
-              decoration: InputDecoration(labelText: "Entrez les réponses possibles (séparées par des virgules)"),
-            ),
-            TextField(
-              controller: _correctAnswerController,
-              decoration: InputDecoration(labelText: "Entrez la réponse correcte"),
-            ),
-            TextField(
-              controller: _categoryController,
-              decoration: InputDecoration(labelText: "Entrez la catégorie du quiz"),
-            ),
-            TextField(
-              controller: _durationController,
-              decoration: InputDecoration(labelText: "Entrez la durée en secondes"),
-              keyboardType: TextInputType.number,
-            ),
-            SizedBox(height: 20),
+            _buildTitleField("Entrez votre question"),
+            _buildTextField("Entrez votre question", (value) => _questionController.text = value),
+            const SizedBox(height: 20),
+            _buildTitleField("Réponses possibles"),
+            _buildTextField("Réponses possibles (séparées par des virgules)", (value) => _possibleAnswersController.text = value),
+            const SizedBox(height: 20),
+            _buildTitleField("Réponse correcte"),
+            _buildTextField("Réponse correcte", (value) => _correctAnswerController.text = value),
+            const SizedBox(height: 20),
+            _buildTitleField("Catégorie"),
+            _buildTextField("Catégorie du quiz", (value) => _categoryController.text = value),
+            const SizedBox(height: 20),
+            _buildTitleField("Durée en secondes"),
+            _buildTextField("Entrez la durée", (value) => _durationController.text = value),
+            const SizedBox(height: 20),
+            _buildTitleField("Note pour chaque question"),
+            _buildTextField("Note (ex: 10)", (value) => _noteController.text = value),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -113,6 +129,9 @@ class _CreerQuizPageState extends State<CreerQuizPage> {
                   child: Text("Public"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _quizType == "public" ? Colors.blue : Colors.grey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
                 SizedBox(width: 10),
@@ -121,17 +140,63 @@ class _CreerQuizPageState extends State<CreerQuizPage> {
                   child: Text("Privé"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _quizType == "privé" ? Colors.blue : Colors.grey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ],
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _createQuiz,
-              child: Text("Créer le Quiz"),
+            Center(
+              child: ElevatedButton(
+                onPressed: _createQuiz,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
+                  child: Text(
+                    "Créer le Quiz",
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(String hint, Function(String) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: TextField(
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: hint,
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitleField(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.black54,
       ),
     );
   }

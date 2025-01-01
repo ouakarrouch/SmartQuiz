@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'CréerQuizPage.dart';
 import 'participer_quiz_page.dart'; // Import de la page "Participer à un Quiz"
+import 'package:quiz/screens/CréerQuizPage.dart';
 
 class HomePage extends StatelessWidget {
   @override
@@ -52,7 +52,7 @@ class HomePage extends StatelessWidget {
                     // Navigation vers la page de création de quiz
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => CreerQuizPage()),
+                      MaterialPageRoute(builder: (context) => CreateQuizPage()),
                     );
                   },
                   style: ElevatedButton.styleFrom(

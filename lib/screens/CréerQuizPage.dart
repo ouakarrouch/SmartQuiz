@@ -1,263 +1,357 @@
-import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:math';
 
-class CreerQuizPage extends StatefulWidget {
+class CreateQuizPage extends StatefulWidget {
   @override
-  _CreerQuizPageState createState() => _CreerQuizPageState();
+  _CreateQuizPageState createState() => _CreateQuizPageState();
 }
 
-class _CreerQuizPageState extends State<CreerQuizPage> {
-  final _questionController = TextEditingController();
-  final _answerController = TextEditingController();
-  final _categoryController = TextEditingController();
-  final _durationController = TextEditingController();
-  final _possibleAnswersController = TextEditingController();
-  final _correctAnswerController = TextEditingController();
-  final _noteController = TextEditingController();
-  String _quizType = "public"; // Type de quiz par défaut
+class _CreateQuizPageState extends State<CreateQuizPage> {
+  final _formKey = GlobalKey<FormState>();
+  int _numberOfQuestions = 0;
+  List<Map<String, dynamic>> _questions = [];
+  String _selectedTheme = 'Sport';
+  String _selectedDifficulty = 'Facile';
+  bool _isPrivate = false;
+  int _timeLimit = 30;
 
-  // Générer un code unique de 4 chiffres pour le quiz
-  String _generateCode() {
-    final random = Random();
-    return (random.nextInt(9000) + 1000)
-        .toString(); // Génère un nombre entre 1000 et 9999
+  // Drop-down menu options
+  List<String> themes = ['Sport', 'Cinéma', 'Histoire', 'Général'];
+  List<String> difficulties = ['Facile', 'Moyen', 'Difficile'];
+
+  // Dynamically create the question fields
+  void _generateQuestionFields() {
+    _questions = List.generate(_numberOfQuestions, (index) {
+      return {
+        'question': '',
+        'answer1': '',
+        'answer2': '',
+        'answer3': '',
+        'correctAnswer': 1,
+      };
+    });
   }
 
-  // Sauvegarder un quiz dans Supabase
-// Sauvegarder un quiz dans Supabase
-Future<void> _saveQuiz(
-    String code,
-    String question,
-    String correctAnswer,
-    String category,
-    String possibleAnswers,
-    String quizType,
-    int duration,
-    String note) async {
-  final supabase = Supabase.instance.client;
-  final user = supabase.auth.currentUser;
+  // Function to check if all fields are filled correctly
+  bool _areFieldsFilled() {
+    if (_selectedTheme.isEmpty || _selectedDifficulty.isEmpty) {
+      return false;
+    }
 
-  // Assurer qu'un utilisateur est connecté
-  if (user == null) {
-    throw Exception("User must be logged in to create a quiz.");
+    if (_numberOfQuestions == 0) {
+      return false;
+    }
+
+    for (var question in _questions) {
+      if (question['question'].isEmpty ||
+          question['answer1'].isEmpty ||
+          question['answer2'].isEmpty ||
+          question['answer3'].isEmpty ||
+          question['correctAnswer'] == null) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  // Structure des données du quiz en fonction des colonnes de la table Quiz
-  final quizData = {
-    'titre': question, // Titre du quiz
-    'description':
-        note, // Description du quiz (on peut utiliser le champ note comme description si nécessaire)
-    'categorie': category, // Catégorie du quiz
-    'difficulte':
-        "Moyen", // Difficulté par défaut à "Moyen" (à ajuster selon la logique de ton app)
-    'createur':
-        user.id, // L'ID de l'utilisateur qui a créé le quiz (clé étrangère)
-    'visibilite':
-        quizType == "public", // Détermine si le quiz est public ou privé
-    'accesscode': code, // Code d'accès du quiz
-    'timelimit': duration, // Durée du quiz en minutes
-    'maxattempts': 1, // Nombre d'essais maximum (par défaut 1)
-    'questions': jsonEncode([{
-      'question': question,
-      'correct_answer': correctAnswer,
-      'possible_answers': possibleAnswers.split(','),
-    }]), // Liste des questions en format JSON
-    'created_at': DateTime.now().toIso8601String(), // Timestamp de création
-    'updated_at': DateTime.now().toIso8601String(), // Timestamp de mise à jour
-  };
+  Future<void> _submitQuiz() async {
+    if (_formKey.currentState!.validate() && _areFieldsFilled()) {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
 
-  // Enregistrement dans la table Quiz
-  final response = await supabase.from('Quiz').insert(quizData).select().single();
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                'Utilisateur non connecté, impossible de créer le quiz.')));
+        return;
+      }
 
-  // Vérification de la présence d'une erreur
-  if (response.error != null) {
-    throw Exception('Error saving quiz: ${response.error!.message}');
+      try {
+        // Générer un code de quiz aléatoire si le quiz est privé
+        String quizCode = _isPrivate
+            ? Random().nextInt(9000).toString().padLeft(4, '0')
+            : '';
+
+        // Insert quiz data into the 'quiz' table
+        final response = await Supabase.instance.client
+            .from('quiz')
+            .upsert([
+              {
+                'theme': _selectedTheme,
+                'difficulty': _selectedDifficulty,
+                'number_of_questions': _numberOfQuestions,
+                'time_limit': _timeLimit,
+                'is_private': _isPrivate,
+                'quiz_code': quizCode, // Ajouter le code si privé
+                'creator_id': userId,
+              }
+            ])
+            .select()
+            .single();
+
+        if (response != null) {
+          final quizId = response['id'];
+
+          // Insert questions into the 'quiz_questions' table
+          for (int i = 0; i < _questions.length; i++) {
+            await Supabase.instance.client.from('quiz_questions').upsert([
+              {
+                'quiz_id': quizId,
+                'question_text': _questions[i]['question'],
+                'answer1': _questions[i]['answer1'],
+                'answer2': _questions[i]['answer2'],
+                'answer3': _questions[i]['answer3'],
+                'correct_answer': _questions[i]['correctAnswer'],
+                'time_limit': _timeLimit,
+              }
+            ]);
+          }
+
+          // Afficher un message de succès
+          _showSuccessDialog(isPrivate: _isPrivate, quizCode: quizCode);
+        } else {
+          throw Exception('Erreur lors de la création du quiz');
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur lors de la création du quiz: $e')));
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content:
+              Text('Veuillez remplir tous les champs avant de soumettre.')));
+    }
   }
 
-  // Affichage du succès
-  print("Quiz créé avec succès.");
-}
-
-
-  // Créer un quiz
-  void _createQuiz() {
-    String code = _generateCode();
-    String question = _questionController.text.trim();
-    String correctAnswer = _correctAnswerController.text.trim();
-    String category = _categoryController.text.trim();
-    String possibleAnswers = _possibleAnswersController.text.trim();
-    int duration = int.tryParse(_durationController.text.trim()) ?? 0;
-    String note = _noteController.text.trim();
-
-    if (question.isNotEmpty &&
-        correctAnswer.isNotEmpty &&
-        category.isNotEmpty &&
-        possibleAnswers.isNotEmpty &&
-        duration > 0 &&
-        note.isNotEmpty) {
-      _saveQuiz(code, question, correctAnswer, category, possibleAnswers,
-          _quizType, duration, note);
-
-      String message = _quizType == "public"
-          ? "Votre quiz a été créé avec succès et est public."
-          : "Votre code de quiz privé est : $code";
-
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text("Quiz créé"),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Ok"),
+ // Afficher le dialogue de succès
+void _showSuccessDialog({required bool isPrivate, required String quizCode}) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 50),
+            SizedBox(height: 16),
+            Text('Quiz Créé', style: TextStyle(fontSize: 20)),
+            if (isPrivate) ...[
+              SizedBox(height: 16),
+              Text('CODE', style: TextStyle(fontSize: 16)),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: quizCode.split('').map((char) {
+                  return Container(
+                    margin: EdgeInsets.symmetric(horizontal: 4),
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      border: Border.all(color: Colors.blue),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      char,
+                      style: TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // Fermer le dialogue
+                Navigator.of(context).pop();
+                // Rediriger vers la page Home
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/home', // Remplacez par le nom de votre route vers la page Home
+                  (route) => false,
+                );
+              },
+              child: Text('OK'),
             ),
           ],
         ),
       );
-    } else {
-      // Gérer les champs vides
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Veuillez remplir tous les champs."),
-      ));
-    }
-  }
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB2E0F7),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          "Créer Quiz",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        centerTitle: true,
+        title: Text('Créer un Quiz'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTitleField("Entrez votre question"),
-            _buildTextField("Entrez votre question",
-                (value) => _questionController.text = value),
-            const SizedBox(height: 20),
-            _buildTitleField("Réponses possibles"),
-            _buildTextField("Réponses possibles (séparées par des virgules)",
-                (value) => _possibleAnswersController.text = value),
-            const SizedBox(height: 20),
-            _buildTitleField("Réponse correcte"),
-            _buildTextField("Réponse correcte",
-                (value) => _correctAnswerController.text = value),
-            const SizedBox(height: 20),
-            _buildTitleField("Catégorie"),
-            _buildTextField("Catégorie du quiz",
-                (value) => _categoryController.text = value),
-            const SizedBox(height: 20),
-            _buildTitleField("Durée en secondes"),
-            _buildTextField(
-                "Entrez la durée", (value) => _durationController.text = value),
-            const SizedBox(height: 20),
-            _buildTitleField("Note pour chaque question"),
-            _buildTextField(
-                "Note (ex: 10)", (value) => _noteController.text = value),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ElevatedButton(
-                  onPressed: () => setState(() => _quizType = "public"),
-                  child: Text("Public"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _quizType == "public" ? Colors.blue : Colors.grey,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
+                // Dropdown for theme
+                DropdownButtonFormField<String>(
+                  value: _selectedTheme,
+                  decoration: InputDecoration(labelText: 'Choisir le thème'),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedTheme = newValue!;
+                    });
+                  },
+                  items: themes.map((theme) {
+                    return DropdownMenuItem(
+                      value: theme,
+                      child: Text(theme),
+                    );
+                  }).toList(),
                 ),
-                SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () => setState(() => _quizType = "privé"),
-                  child: Text("Privé"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _quizType == "privé" ? Colors.blue : Colors.grey,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                SizedBox(height: 16),
+
+                // Dropdown for difficulty
+                DropdownButtonFormField<String>(
+                  value: _selectedDifficulty,
+                  decoration: InputDecoration(labelText: 'Difficulté'),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedDifficulty = newValue!;
+                    });
+                  },
+                  items: difficulties.map((difficulty) {
+                    return DropdownMenuItem(
+                      value: difficulty,
+                      child: Text(difficulty),
+                    );
+                  }).toList(),
+                ),
+                SizedBox(height: 16),
+
+                // Number of questions field
+                TextFormField(
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: 'Nombre de questions'),
+                  onChanged: (value) {
+                    setState(() {
+                      _numberOfQuestions = int.tryParse(value) ?? 0;
+                      _generateQuestionFields();
+                    });
+                  },
+                ),
+                SizedBox(height: 16),
+
+                // Generate questions dynamically
+                if (_numberOfQuestions > 0) ...[
+                  ...List.generate(_numberOfQuestions, (index) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          decoration: InputDecoration(
+                              labelText: 'Question ${index + 1}'),
+                          onChanged: (value) {
+                            setState(() {
+                              _questions[index]['question'] = value;
+                            });
+                          },
+                        ),
+                        TextFormField(
+                          decoration: InputDecoration(labelText: 'Réponse 1'),
+                          onChanged: (value) {
+                            setState(() {
+                              _questions[index]['answer1'] = value;
+                            });
+                          },
+                        ),
+                        TextFormField(
+                          decoration: InputDecoration(labelText: 'Réponse 2'),
+                          onChanged: (value) {
+                            setState(() {
+                              _questions[index]['answer2'] = value;
+                            });
+                          },
+                        ),
+                        TextFormField(
+                          decoration: InputDecoration(labelText: 'Réponse 3'),
+                          onChanged: (value) {
+                            setState(() {
+                              _questions[index]['answer3'] = value;
+                            });
+                          },
+                        ),
+                        DropdownButtonFormField<int>(
+                          value: _questions[index]['correctAnswer'],
+                          decoration:
+                              InputDecoration(labelText: 'Réponse correcte'),
+                          onChanged: (value) {
+                            setState(() {
+                              _questions[index]['correctAnswer'] = value!;
+                            });
+                          },
+                          items: [1, 2, 3].map((answer) {
+                            return DropdownMenuItem(
+                              value: answer,
+                              child: Text('Réponse $answer'),
+                            );
+                          }).toList(),
+                        ),
+                        SizedBox(height: 16),
+                      ],
+                    );
+                  }),
+                ],
+
+                // Quiz type selection using checkboxes
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Column(
+                      children: [
+                        Text('Public'),
+                        Checkbox(
+                          value: !_isPrivate,
+                          onChanged: (value) {
+                            setState(() {
+                              _isPrivate = !value!;
+                            });
+                          },
+                        ),
+                      ],
                     ),
-                  ),
+                    SizedBox(width: 20),
+                    Column(
+                      children: [
+                        Text('Privé'),
+                        Checkbox(
+                          value: _isPrivate,
+                          onChanged: (value) {
+                            setState(() {
+                              _isPrivate = value!;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                // Submit button
+                ElevatedButton(
+                  onPressed: _areFieldsFilled() ? _submitQuiz : null,
+                  child: Text('Créer le Quiz'),
                 ),
               ],
             ),
-            SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: _createQuiz,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 12.0, horizontal: 20.0),
-                  child: Text(
-                    "Créer le Quiz",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(String hint, Function(String) onChanged) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: TextField(
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          hintText: hint,
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
           ),
         ),
       ),
     );
   }
-
-  Widget _buildTitleField(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Colors.black54,
-      ),
-    );
-  }
-}
-
-extension on PostgrestMap {
-  get error => null;
 }

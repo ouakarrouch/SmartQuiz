@@ -46,7 +46,7 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) =>const SuccessPage(),
+        builder: (context) => const SuccessPage(),
       ),
     );
   }
@@ -113,8 +113,8 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                    vertical: 18, horizontal: 20),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
               ),
             ),
             const SizedBox(height: 16),
@@ -131,8 +131,8 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                    vertical: 18, horizontal: 20),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
               ),
             ),
             if (_errorMessage != null) ...[

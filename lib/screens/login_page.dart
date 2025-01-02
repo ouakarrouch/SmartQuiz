@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quiz/utils/auth_service.dart'; // Import du service d'authentification
 import 'package:quiz/screens/home_page.dart'; // Assurez-vous que HomePage existe
-import 'package:quiz/screens/reset_password_page.dart'; // Page de réinitialisation
 import 'package:quiz/screens/welcome_page.dart'; // Import de la WelcomePage
 
 class LoginPage extends StatefulWidget {
@@ -125,31 +124,6 @@ class LoginPageState extends State<LoginPage> {
 
                       // Champs Mot de passe
                       _buildTextField(passwordController, 'Mot de passe', true),
-
-                      const SizedBox(height: 10),
-
-                      // Texte "Mot de passe oublié ?"
-                      Align(
-                        alignment: Alignment.center,
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const UserResetPasswordPage()),
-                            );
-                          },
-                          child: const Text(
-                            'Vous avez oublié le Mot de Passe?',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                      ),
 
                       const SizedBox(height: 10),
 

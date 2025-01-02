@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'participer_quiz_page.dart'; // Import de la page "Participer à un Quiz"
 import 'package:quiz/screens/CréerQuizPage.dart';
+import 'package:quiz/screens/profilepage.dart'; // Import de la page de profil
+import 'package:quiz/screens/quizselectionpage.dart'; // Import de la page de sélection de quiz
 
 class HomePage extends StatelessWidget {
   @override
@@ -105,31 +107,54 @@ class HomePage extends StatelessWidget {
                     icon: Icons.history,
                     label: "Histoire",
                     color: Colors.blue[400],
+                    onTap: () {
+                      // Navigation vers la page de sélection de quiz
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => QuizSelectionPage()),
+                      );
+                    },
                   ),
                   CategoryItem(
                     icon: Icons.public,
                     label: "Géographie",
                     color: Colors.blue[400],
+                    onTap: () {
+                      // Action pour la catégorie Géographie
+                    },
                   ),
                   CategoryItem(
                     icon: Icons.science,
                     label: "Sciences",
                     color: Colors.blue[400],
+                    onTap: () {
+                      // Action pour la catégorie Sciences
+                    },
                   ),
                   CategoryItem(
                     icon: Icons.music_note,
                     label: "Musique",
                     color: Colors.blue[400],
+                    onTap: () {
+                      // Action pour la catégorie Musique
+                    },
                   ),
                   CategoryItem(
                     icon: Icons.sports_basketball,
                     label: "Sport",
                     color: Colors.blue[400],
+                    onTap: () {
+                      // Action pour la catégorie Sport
+                    },
                   ),
                   CategoryItem(
                     icon: Icons.movie,
                     label: "Cinéma",
                     color: Colors.blue[400],
+                    onTap: () {
+                      // Action pour la catégorie Cinéma
+                    },
                   ),
                 ],
               ),
@@ -150,7 +175,11 @@ class HomePage extends StatelessWidget {
           } else if (index == 2) {
             Navigator.pushNamed(context, '/leaderboard'); // Page classement
           } else if (index == 3) {
-            Navigator.pushNamed(context, '/profile'); // Page profil
+            // Navigation vers la page de profil
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfilePage()),
+            );
           }
         },
         items: const [
@@ -181,11 +210,13 @@ class CategoryItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color? color;
+  final VoidCallback onTap;
 
   const CategoryItem({
     required this.icon,
     required this.label,
     this.color,
+    required this.onTap,
   });
 
   @override
@@ -218,9 +249,7 @@ class CategoryItem extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-          onTap: () {
-            // Action à effectuer lors d'un clic sur une catégorie
-          },
+          onTap: onTap, // Utilisation de la fonction onTap passée en paramètre
         ),
       ),
     );

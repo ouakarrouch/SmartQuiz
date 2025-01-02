@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quiz/screens/Editprofilepage.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -29,19 +30,28 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             // Modifier Profil
             _buildListTile(Icons.person, 'Modifier Profil', () {
-              Navigator.pushNamed(context, '/editProfile'); // Navigation vers la page Modifier Profil
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      EditProfilePage(), // Navigation vers EditProfilePage
+                ),
+              );
             }),
             // Sécurité
             _buildListTile(Icons.lock, 'Sécurité', () {
-              Navigator.pushNamed(context, '/security'); // Navigation vers la page Sécurité
+              Navigator.pushNamed(
+                  context, '/security'); // Navigation vers la page Sécurité
             }),
             // Ajouter Compte
             _buildListTile(Icons.account_box, 'Ajouter Compte', () {
-              Navigator.pushNamed(context, '/addAccount'); // Navigation vers la page Ajouter Compte
+              Navigator.pushNamed(context,
+                  '/addAccount'); // Navigation vers la page Ajouter Compte
             }),
             // Mes Quizzes
             _buildListTile(Icons.quiz, 'Mes Quizzes', () {
-              Navigator.pushNamed(context, '/myQuizzes'); // Navigation vers la page Mes Quizzes
+              Navigator.pushNamed(
+                  context, '/myQuizzes'); // Navigation vers la page Mes Quizzes
             }),
             // Espacement
             const Divider(),
@@ -59,7 +69,8 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             // Déconnexion
             _buildListTile(Icons.exit_to_app, 'Déconnexion', () {
-              Navigator.pushReplacementNamed(context, '/logout'); // Redirection vers la page de déconnexion
+              Navigator.pushReplacementNamed(context,
+                  '/logout'); // Redirection vers la page de déconnexion
             }),
           ],
         ),
@@ -73,7 +84,9 @@ class _SettingsPageState extends State<SettingsPage> {
           // Navigation vers les autres pages
           if (index == 0) Navigator.pushNamed(context, '/home');
           if (index == 2) Navigator.pushNamed(context, '/leaderboard');
-          if (index == 3) Navigator.pushNamed(context, '/profile');
+          if (index == 3)
+            Navigator.pushNamed(
+                context, '/profile'); // Navigation vers ProfilePage
         },
         items: const [
           BottomNavigationBarItem(

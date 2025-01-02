@@ -90,51 +90,107 @@ class _ParticiperQuizPageState extends State<ParticiperQuizPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Participer à un Quiz")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const Text(
-              "Confiance en toi, tu es prêt !",
-              style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(4, (index) {
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  width: 50,
-                  child: TextField(
-                    controller: _digitControllers[index],
-                    keyboardType: TextInputType.number,
-                    maxLength: 1,
-                    textAlign: TextAlign.center,
-                    decoration: const InputDecoration(
-                      counterText: "",
-                      border: OutlineInputBorder(),
+      appBar: AppBar(
+        title: const Text(
+          "Participer à un Quiz",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF4E55A1),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF4E55A1),
+              Color(0xFF6A72C1),
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Confiance en toi, tu es prêt !",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (index) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    width: 60,
+                    child: TextField(
+                      controller: _digitControllers[index],
+                      keyboardType: TextInputType.number,
+                      maxLength: 1,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: InputDecoration(
+                        counterText: "",
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.2),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        if (value.length == 1 && index < 3) {
+                          FocusScope.of(context).nextFocus();
+                        }
+                      },
                     ),
-                    onChanged: (value) {
-                      if (value.length == 1 && index < 3) {
-                        FocusScope.of(context).nextFocus();
-                      }
-                    },
+                  );
+                }),
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _checkQuizCode,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 15,
                   ),
-                );
-              }),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _checkQuizCode,
-              child: const Text("Participer"),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              _feedbackMessage,
-              style: const TextStyle(color: Colors.red),
-            ),
-          ],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  "Participer",
+                  style: TextStyle(
+                    color: Color(0xFF4E55A1),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                _feedbackMessage,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -57,73 +57,72 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
   }
 
   Future<void> _submitQuiz() async {
-    if (_formKey.currentState!.validate() && _areFieldsFilled()) {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (_formKey.currentState!.validate() && _areFieldsFilled()) {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
 
-      if (userId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-                'Utilisateur non connecté, impossible de créer le quiz.')));
-        return;
-      }
-
-      try {
-        // Générer un code de quiz aléatoire si le quiz est privé
-        String quizCode = _isPrivate
-            ? Random().nextInt(9000).toString().padLeft(4, '0')
-            : '';
-
-        // Insert quiz data into the 'quiz' table
-        final response = await Supabase.instance.client
-            .from('quiz')
-            .upsert([
-              {
-                'theme': _selectedTheme,
-                'difficulty': _selectedDifficulty,
-                'number_of_questions': _numberOfQuestions,
-                'time_limit': _timeLimit,
-                'is_private': _isPrivate,
-                'quiz_code': quizCode, // Ajouter le code si privé
-                'creator_id': userId,
-              }
-            ])
-            .select()
-            .single();
-
-        if (response != null) {
-          final quizId = response['id'];
-
-          // Insert questions into the 'quiz_questions' table
-          for (int i = 0; i < _questions.length; i++) {
-            await Supabase.instance.client.from('quiz_questions').upsert([
-              {
-                'quiz_id': quizId,
-                'question_text': _questions[i]['question'],
-                'answer1': _questions[i]['answer1'],
-                'answer2': _questions[i]['answer2'],
-                'answer3': _questions[i]['answer3'],
-                'correct_answer': _questions[i]['correctAnswer'],
-                'time_limit': _timeLimit,
-              }
-            ]);
-          }
-
-          // Afficher un message de succès
-          _showSuccessDialog(isPrivate: _isPrivate, quizCode: quizCode);
-        } else {
-          throw Exception('Erreur lors de la création du quiz');
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur lors de la création du quiz: $e')));
-      }
-    } else {
+    if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content:
-              Text('Veuillez remplir tous les champs avant de soumettre.')));
+              Text('Utilisateur non connecté, impossible de créer le quiz.')));
+      return;
     }
-  }
 
+    try {
+      // Générer un code de quiz aléatoire uniquement si le quiz est privé
+      String quizCode = _isPrivate
+          ? Random().nextInt(9000).toString().padLeft(4, '0')
+          : ''; // Pas de code pour les quiz publics
+
+      // Insert quiz data into the 'quiz' table
+      final response = await Supabase.instance.client
+          .from('quiz')
+          .upsert([
+            {
+              'theme': _selectedTheme,
+              'difficulty': _selectedDifficulty,
+              'number_of_questions': _numberOfQuestions,
+              'time_limit': _timeLimit,
+              'is_private': _isPrivate,
+              'quiz_code': quizCode, // Code vide pour les quiz publics
+              'creator_id': userId,
+            }
+          ])
+          .select()
+          .single();
+
+      if (response != null) {
+        final quizId = response['id'];
+
+        // Insert questions into the 'quiz_questions' table
+        for (int i = 0; i < _questions.length; i++) {
+          await Supabase.instance.client.from('quiz_questions').upsert([
+            {
+              'quiz_id': quizId,
+              'question_text': _questions[i]['question'],
+              'answer1': _questions[i]['answer1'],
+              'answer2': _questions[i]['answer2'],
+              'answer3': _questions[i]['answer3'],
+              'correct_answer': _questions[i]['correctAnswer'],
+              'time_limit': _timeLimit,
+            }
+          ]);
+        }
+
+        // Afficher un message de succès
+        _showSuccessDialog(isPrivate: _isPrivate, quizCode: quizCode);
+      } else {
+        throw Exception('Erreur lors de la création du quiz');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la création du quiz: $e')));
+    }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content:
+            Text('Veuillez remplir tous les champs avant de soumettre.')));
+  }
+}
   // Afficher le dialogue de succès
   void _showSuccessDialog({required bool isPrivate, required String quizCode}) {
     showDialog(

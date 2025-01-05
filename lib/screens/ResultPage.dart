@@ -98,7 +98,8 @@ class ResultPage extends StatelessWidget {
                   children: [
                     const TextSpan(text: 'Félicitations, '),
                     TextSpan(
-                      text: '$firstName $lastName', // Afficher le prénom et le nom
+                      text:
+                          '$firstName $lastName', // Afficher le prénom et le nom
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontStyle: FontStyle.italic,
@@ -120,17 +121,24 @@ class ResultPage extends StatelessWidget {
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  // Retour à l'accueil (HomePage) en remplaçant la page actuelle
+                  print('Navigating to HomePage');
+                  // Retour à l'accueil (HomePage) en supprimant toutes les pages de la pile
+                  Navigator.popUntil(
+                      context,
+                      (route) => route
+                          .isFirst); // Supprime toutes les pages sauf la première
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => HomePage(), // Remplacez par votre page d'accueil
+                      builder: (context) =>
+                          HomePage(), // Remplacez par votre page d'accueil
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),

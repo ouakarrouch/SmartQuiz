@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:quiz/screens/QuizPage.dart'; // Assurez-vous d'importer la page QuizPage
-
+import 'package:quiz/screens/Quizpage.dart';
 
 class QuizReadyPage extends StatelessWidget {
-  final String theme; // Thème du quiz
-  final String quizCode; // Code unique pour identifier le quiz
-  final int timeLimit; // Limite de temps pour le quiz (en secondes)
-  final VoidCallback onReady; // Callback lorsqu'on est prêt
+  final String theme;
+  final String quizId; // ID du quiz
+  final VoidCallback onReady;
 
   const QuizReadyPage({
     super.key,
     required this.theme,
-    required this.quizCode,
-    required this.timeLimit,
+    required this.quizId,
     required this.onReady,
   });
 
@@ -20,17 +17,18 @@ class QuizReadyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          theme,
-          style: const TextStyle(
+        title: const Text(
+          "Prêt pour le Quiz?",
+          style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
+            fontSize: 24,
           ),
         ),
         centerTitle: true,
-        automaticallyImplyLeading: false, // Désactive le bouton de retour
         backgroundColor: const Color(0xFF4E55A1),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -43,65 +41,80 @@ class QuizReadyPage extends StatelessWidget {
             ],
           ),
         ),
-        child: Center(
+        child: Center( // Centrer le contenu
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center, // Centrer verticalement
               children: [
-                // Texte conditionnel en fonction du thème
-                if (theme.toLowerCase() == 'histoire')
-                  const Text(
-                    "C'est parti pour un voyage dans le temps ?",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  )
-                else
-                  const Text(
-                    "Prêt pour ce quiz passionnant ?",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
+                // Titre du quiz
+                Text(
+                  " $theme ",
+                  style: const TextStyle(
+                    fontSize: 32,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 10.0,
+                        color: Colors.black45,
+                        offset: Offset(2.0, 2.0),
+                      ),
+                    ],
                   ),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 30),
+
+                // Illustration ou icône
+                Icon(
+                  Icons.quiz,
+                  size: 120,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+                const SizedBox(height: 30),
+
+                // Message d'encouragement
+                const Text(
+                  "Êtes-vous prêt à relever le défi ?",
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: Colors.white,
+                    fontStyle: FontStyle.italic,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 5.0,
+                        color: Colors.black45,
+                        offset: Offset(1.0, 1.0),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 40),
+
+                // Bouton "Commencer"
                 ElevatedButton(
                   onPressed: () {
-                    // Redirection vers la page QuizPage avec les paramètres nécessaires
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => QuizPage(
-                          theme: theme, // Passe le thème
-                          quizCode: quizCode, // Passe le code du quiz
-                          timeLimit: timeLimit, // Passe la limite de temps
-                        ),
-                      ),
-                    );
+                    onReady(); // Appelle la fonction onReady
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 15,
+                      horizontal: 60,
+                      vertical: 20,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(20),
                     ),
+                    elevation: 8,
+                    shadowColor: Colors.black.withOpacity(0.3),
                   ),
                   child: const Text(
-                    "Prêt",
+                    "Commencer",
                     style: TextStyle(
                       color: Color(0xFF4E55A1),
-                      fontSize: 18,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

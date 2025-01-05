@@ -1,18 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:quiz/screens/ResultPage.dart';
+import 'package:quiz/screens/ResultPage.dart'; // Assurez-vous que le chemin est correct
 
 class QuizPage extends StatefulWidget {
   final int timeLimit; // Limite de temps en secondes pour chaque question
   final String theme; // Thème du quiz
   final String quizCode; // Code du quiz pour récupérer les données
+  final String quizId; // ID du quiz pour récupérer les questions
 
   const QuizPage({
     super.key,
     required this.timeLimit,
     required this.theme,
     required this.quizCode,
+    required this.quizId,
   });
 
   @override
@@ -52,7 +54,7 @@ class _QuizPageState extends State<QuizPage> {
       final response = await Supabase.instance.client
           .from('quiz') // Nom de la table
           .select('theme') // Colonne à récupérer
-          .eq('quiz_code', widget.quizCode) // Filtrer par code du quiz
+          .eq('id', widget.quizId) // Filtrer par ID du quiz
           .maybeSingle();
 
       if (response != null && response['theme'] != null) {
@@ -74,35 +76,18 @@ class _QuizPageState extends State<QuizPage> {
   // Fonction pour récupérer toutes les questions du quiz
   Future<void> fetchAllQuestions() async {
     try {
-      // Récupérer l'ID du quiz à partir de 'quiz_code'
-      final quizResponse = await Supabase.instance.client
-          .from('quiz')
-          .select('id')
-          .eq('quiz_code', widget.quizCode)
-          .limit(1)
-          .maybeSingle();
+      // Récupérer toutes les questions et réponses à partir de 'quiz_questions'
+      final response = await Supabase.instance.client
+          .from('quiz_questions')
+          .select('question_text, answer1, answer2, answer3, correct_answer')
+          .eq('quiz_id', widget.quizId) // Utiliser 'quiz_id' pour filtrer les questions
+          .order('id', ascending: true); // Trier par ID pour garder l'ordre
 
-      if (quizResponse != null && quizResponse['id'] != null) {
-        final quizId = quizResponse['id'];
-
-        // Récupérer toutes les questions et réponses à partir de 'quiz_questions'
-        final response = await Supabase.instance.client
-            .from('quiz_questions')
-            .select('question_text, answer1, answer2, answer3, correct_answer')
-            .eq('quiz_id', quizId) // Utiliser 'quiz_id' pour filtrer les questions
-            .order('id', ascending: true); // Trier par ID pour garder l'ordre
-
-        if (response != null && response.isNotEmpty) {
-          setState(() {
-            questions = response;
-            totalQuestions = questions.length;
-          });
-        } else {
-          setState(() {
-            questions = [];
-            totalQuestions = 0;
-          });
-        }
+      if (response != null && response.isNotEmpty) {
+        setState(() {
+          questions = response;
+          totalQuestions = questions.length;
+        });
       } else {
         setState(() {
           questions = [];
@@ -273,8 +258,8 @@ class _QuizPageState extends State<QuizPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Section du quiz actuel
               const SizedBox(height: 20),
-              // Progression et compte à rebours
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -304,7 +289,6 @@ class _QuizPageState extends State<QuizPage> {
                 ],
               ),
               const SizedBox(height: 40),
-              // Question
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -322,7 +306,6 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               const SizedBox(height: 30),
-              // Affichage des réponses
               Column(
                 children: [
                   AnswerTile(
@@ -346,7 +329,6 @@ class _QuizPageState extends State<QuizPage> {
                 ],
               ),
               const SizedBox(height: 30),
-              // Bouton suivant ou terminer
               ElevatedButton(
                 onPressed: isLastQuestion ? navigateToResultPage : goToNextQuestion,
                 style: ElevatedButton.styleFrom(

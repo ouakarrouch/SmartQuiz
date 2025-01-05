@@ -45,6 +45,7 @@ class _ParticiperQuizPageState extends State<ParticiperQuizPage> {
       final theme = quizResponse['theme'] ?? "Quiz";
       final quizCode = quizResponse['quiz_code'] ?? code;
       final timeLimit = quizResponse['time_limit'] ?? 300; // Limite de temps en secondes
+      final quizId = quizResponse['id'].toString(); // ID du quiz
 
       // Naviguer vers QuizReadyPage en passant les données nécessaires
       Navigator.push(
@@ -52,8 +53,8 @@ class _ParticiperQuizPageState extends State<ParticiperQuizPage> {
         MaterialPageRoute(
           builder: (context) => QuizReadyPage(
             theme: theme, // Passe le thème du quiz
-            quizCode: quizCode, // Passe le code du quiz
-            timeLimit: timeLimit, // Passe la limite de temps
+
+            quizId: quizId, // Passe l'ID du quiz
             onReady: () {
               // Navigue vers la page principale du quiz
               Navigator.push(
@@ -63,6 +64,7 @@ class _ParticiperQuizPageState extends State<ParticiperQuizPage> {
                     theme: theme,
                     quizCode: quizCode,
                     timeLimit: timeLimit,
+                    quizId: quizId, // Passe l'ID du quiz
                   ),
                 ),
               );

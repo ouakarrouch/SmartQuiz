@@ -108,11 +108,12 @@ class HomePage extends StatelessWidget {
                     label: "Histoire",
                     color: Colors.blue[400],
                     onTap: () {
-                      // Navigation vers la page de sélection de quiz
+                      // Navigation vers la page de sélection de quiz avec le thème "Histoire"
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => QuizSelectionPage()),
+                          builder: (context) => QuizSelectionPage(theme: "Histoire"),
+                        ),
                       );
                     },
                   ),
@@ -121,7 +122,13 @@ class HomePage extends StatelessWidget {
                     label: "Géographie",
                     color: Colors.blue[400],
                     onTap: () {
-                      // Action pour la catégorie Géographie
+                      // Navigation vers la page de sélection de quiz avec le thème "Géographie"
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuizSelectionPage(theme: "Géographie"),
+                        ),
+                      );
                     },
                   ),
                   CategoryItem(
@@ -129,7 +136,13 @@ class HomePage extends StatelessWidget {
                     label: "Sciences",
                     color: Colors.blue[400],
                     onTap: () {
-                      // Action pour la catégorie Sciences
+                      // Navigation vers la page de sélection de quiz avec le thème "Sciences"
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuizSelectionPage(theme: "Sciences"),
+                        ),
+                      );
                     },
                   ),
                   CategoryItem(
@@ -137,7 +150,13 @@ class HomePage extends StatelessWidget {
                     label: "Musique",
                     color: Colors.blue[400],
                     onTap: () {
-                      // Action pour la catégorie Musique
+                      // Navigation vers la page de sélection de quiz avec le thème "Musique"
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuizSelectionPage(theme: "Musique"),
+                        ),
+                      );
                     },
                   ),
                   CategoryItem(
@@ -145,7 +164,13 @@ class HomePage extends StatelessWidget {
                     label: "Sport",
                     color: Colors.blue[400],
                     onTap: () {
-                      // Action pour la catégorie Sport
+                      // Navigation vers la page de sélection de quiz avec le thème "Sport"
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuizSelectionPage(theme: "Sport"),
+                        ),
+                      );
                     },
                   ),
                   CategoryItem(
@@ -153,7 +178,13 @@ class HomePage extends StatelessWidget {
                     label: "Cinéma",
                     color: Colors.blue[400],
                     onTap: () {
-                      // Action pour la catégorie Cinéma
+                      // Navigation vers la page de sélection de quiz avec le thème "Cinéma"
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuizSelectionPage(theme: "Cinéma"),
+                        ),
+                      );
                     },
                   ),
                 ],
